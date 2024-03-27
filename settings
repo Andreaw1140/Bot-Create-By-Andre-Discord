@@ -1,0 +1,36 @@
+const { Client, Intents } = require('discord.js');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, StreamType, AudioPlayerStatus } = require('@discordjs/voice');
+const ytdl = require('ytdl-core');
+
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
+const player = createAudioPlayer();
+
+client.once('ready', () => {
+    console.log('Bot siap!');
+});
+
+client.on('messageCreate', async message => {
+    if (!message.guild) return;
+    if (message.content.startsWith('!main')) {
+        const voiceChannel = message.member.voice.channel;
+        if (!voiceChannel) return message.reply('Lu harus masuk voice channel dulu, bre!');
+
+        const connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator
+        });
+
+        const url = message.content.split(' ')[1];
+        if (!url) return message.reply('Lu harus masukin link lagu, nih!');
+
+        const stream = ytdl(url, { filter: 'audioonly' });
+        const resource = createAudioResource(stream, { inputType: StreamType.Arbitrary });
+
+        connection.subscribe(player);
+        player.play(resource);
+        message.reply('Nih, aku mainin lagunya, bre!');
+    }
+});
+
+client.login('TOKEN_BOT_KAMU');
